@@ -2,7 +2,7 @@
 
 A web app that runs tasks in the background using a priority queue and worker threads. Users add tasks from a web page, workers process them by priority, and the page shows the live status of every task.
 
-**Live demo:** _(link will be added after deployment)_
+**Live demo:** https://task-scheduler-a9lh.onrender.com
 
 ## Problem it solves
 
