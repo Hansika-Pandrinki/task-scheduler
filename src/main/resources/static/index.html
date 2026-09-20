@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Scheduler</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 15px; }
+    h1 { text-align: center; }
+    .form { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+    .form input { flex: 1; min-width: 200px; padding: 10px; }
+    .form select, .form button { padding: 10px; }
+    .form button { background: #2563eb; color: white; border: none; cursor: pointer; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background: #f3f4f6; }
+    .PENDING { color: #b45309; font-weight: bold; }
+    .RUNNING { color: #2563eb; font-weight: bold; }
+    .COMPLETED { color: #16a34a; font-weight: bold; }
+    .FAILED { color: #dc2626; font-weight: bold; }
+    #error { color: #dc2626; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Task Scheduler</h1>
+
+  <div class="form">
+    <input type="text" id="taskName" placeholder="Task name (example: Send email)">
+    <select id="taskPriority">
+      <option value="3">High</option>
+      <option value="2" selected>Medium</option>
+      <option value="1">Low</option>
+    </select>
+    <button onclick="addTask()">Add Task</button>
+  </div>
+  <div id="error"></div>
+
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Priority</th><th>Status</th><th>Retries</th></tr>
+    </thead>
+    <tbody id="taskBody"></tbody>
+  </table>
+
+  <script>
+    const priorityNames = { 3: "High", 2: "Medium", 1: "Low" };
+
+    async function loadTasks() {
+      try {
+        const res = await fetch("/tasks");
+        const tasks = await res.json();
+        const body = document.getElementById("taskBody");
+        body.innerHTML = "";
+
+        tasks.forEach(t => {
+          const row = document.createElement("tr");
+          const values = [t.id, t.name, priorityNames[t.priority] || t.priority, t.status, t.retryCount];
+          values.forEach((value, index) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            if (index === 3) cell.className = t.status;
+            row.appendChild(cell);
+          });
+          body.appendChild(row);
+        });
+      } catch (e) {
+        document.getElementById("error").textContent = "Cannot reach the server.";
+      }
+    }
+
+    async function addTask() {
+      const name = document.getElementById("taskName").value;
+      const priority = parseInt(document.getElementById("taskPriority").value);
+      const errorBox = document.getElementById("error");
+      errorBox.textContent = "";
+
+      const res = await fetch("/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, priority: priority })
+      });
+
+      if (!res.ok) {
+        errorBox.textContent = "Could not add task. Please enter a task name.";
+        return;
+      }
+      document.getElementById("taskName").value = "";
+      loadTasks();
+    }
+
+    loadTasks();
+    setInterval(loadTasks, 2000); // refresh every 2 seconds
+  </script>
+</body>
+</html>
